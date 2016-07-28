@@ -1,0 +1,163 @@
+#! /usr/local/Nuke10.0v1/libnuke-10.0.1.so -nx
+version 10.0 v1
+##Simple tool to create quick chromatic abberations. Feedbacks and Request, send to steve.chong@gmail.com##
+
+## Change Log##
+## v2 - transform center now follow input height and width instead of project settings
+## v2.1 -Added Credits
+
+##Future Updates Checklist##
+## add displace for Y axis
+## add displace for rotations
+## add radial distortion 
+
+Gizmo {
+ name chromaAbbr_v02
+ inputs 2
+ help "Add chromatic abberation to your footage by displacing the footage's red and blue channel.\n\n"
+ tile_color 0x6080ffff
+ addUserKnob {20 chAbbr l ChromaAbbr t "\n"}
+ addUserKnob {20 endGroup n -1}
+ addUserKnob {7 dispRB l "displace scale" t "Displace the R and B channel with scale\n\nDial in a negative value to reverse the direction direction." R -50 50}
+ dispRB 5
+ addUserKnob {7 dispRBt l "displace translate" t "Displace the R and B channel with translation\nDial in a negative value to reverse the direction direction." R -50 50}
+ addUserKnob {26 break l "" +STARTLINE}
+ addUserKnob {1 null l INVISIBLE t "Chromatic Abberation Tool Ver. 1.0\n\nv 1.0\n-Create chromatic abberation from input image\n-mask input can be inverted\n\nfeedbacks and suggestions goes to :\n\nSteve Chong\n\ntekloong.wordpress.com\nsteve.chong@gmail.com" +INVISIBLE}
+ addUserKnob {41 saturation T Saturation1.saturation}
+ addUserKnob {41 size l "blur size" T Blur4.size}
+ addUserKnob {41 mix T PLUS.mix}
+ addUserKnob {6 invertM l "invert Mask" t "Invert the mask.\n\nMask Input must be connected to an alpha or else it will return an error" +STARTLINE}
+ addUserKnob {26 bar l "" +STARTLINE}
+ addUserKnob {26 credits l "" +STARTLINE T "Chromatic Abberation v2 July 2016. \nFeedbacks and Requests send to Steve Chong \nsteve.chong@gmail.com || schong@taufilms.com"}
+}
+ Input {
+  inputs 0
+  name mask
+  xpos 459
+  ypos -362
+  number 1
+ }
+ Invert {
+  channels alpha
+  name Invert1
+  xpos 459
+  ypos -194
+  disable {{1>parent.invertM x92 1}}
+ }
+set Na85ebba0 [stack 0]
+push $Na85ebba0
+ Input {
+  inputs 0
+  name image
+  xpos 763
+  ypos -367
+ }
+ Dot {
+  name IMAGE
+  label Image
+  xpos 797
+  ypos -284
+ }
+ Dot {
+  name Dot4
+  xpos 797
+  ypos -240
+ }
+set Na85c3690 [stack 0]
+ Dot {
+  name Dot3
+  xpos 617
+  ypos -240
+ }
+ TransformMasked {
+  inputs 1+1
+  channels {rgba.red -rgba.green -rgba.blue none}
+  translate {{parent.dispRBt} 0}
+  scale {{1-(parent.dispRB*.001)} 1}
+  center {{input.width/2} {input.height/2}}
+  filter Impulse
+  black_outside false
+  name TransformRED
+  xpos 583
+  ypos -188
+ }
+ TransformMasked {
+  inputs 1+1
+  channels {-rgba.red -rgba.green rgba.blue none}
+  translate {{-parent.dispRBt} 0}
+  scale {{1+(parent.dispRB*.001)} 1}
+  center {{parent.TransformRED.center.x} {parent.TransformRED.center.y}}
+  filter Impulse
+  black_outside false
+  name TransformBLUE
+  xpos 583
+  ypos -139
+ }
+push $Na85c3690
+ Dot {
+  name Dot1
+  xpos 797
+  ypos -95
+ }
+set N6394a40 [stack 0]
+ Merge2 {
+  inputs 2
+  operation minus
+  bbox B
+  name FROM
+  xpos 583
+  ypos -98
+ }
+ Saturation {
+  channels {rgba.red -rgba.green rgba.blue -rgba.alpha}
+  saturation 2
+  mode Average
+  name Saturation1
+  xpos 583
+  ypos -65
+  addUserKnob {20 User}
+  addUserKnob {6 toggleG l "" +STARTLINE +STARTLINE}
+ }
+ Saturation {
+  saturation {{parent.Saturation1.saturation}}
+  mode Average
+  name Saturation2
+  xpos 583
+  ypos -17
+  disable {{1<parent.Saturation2.saturation x1 1}}
+ }
+ Blur {
+  name Blur4
+  xpos 583
+  ypos 9
+ }
+push $N6394a40
+ Merge2 {
+  inputs 2
+  operation plus
+  bbox B
+  name PLUS
+  xpos 763
+  ypos 15
+ }
+set Na849df90 [stack 0]
+ Dot {
+  name Out
+  label "Out\n"
+  xpos 797
+  ypos 143
+ }
+ Output {
+  name Output1
+  xpos 763
+  ypos 217
+ }
+push $Na849df90
+ Viewer {
+  frame_range 1-64
+  input_process false
+  name Viewer1
+  xpos 916
+  ypos 217
+ }
+end_group
